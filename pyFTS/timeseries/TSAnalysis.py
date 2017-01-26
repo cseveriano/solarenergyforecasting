@@ -23,3 +23,31 @@ def test_stationarity(timeseries):
     for key,value in dftest[4].items():
         dfoutput['Critical Value (%s)'%key] = value
     print (dfoutput)
+    
+def decomposing(ts, frequency):
+
+    ts.dropna(inplace=True)
+    decomposition = seasonal_decompose(ts, freq=frequency)
+
+    trend = decomposition.trend
+    seasonal = decomposition.seasonal
+    residual = decomposition.resid
+    
+    plt.subplot(411)
+    plt.plot(ts, label='Original')
+    plt.legend(loc='best')
+    plt.subplot(412)
+    plt.plot(trend, label='Trend')
+    plt.legend(loc='best')
+    plt.subplot(413)
+    plt.plot(seasonal,label='Seasonality')
+    plt.legend(loc='best')
+    plt.subplot(414)
+    plt.plot(residual, label='Residuals')
+    plt.legend(loc='best')
+    plt.tight_layout()
+    
+    ts_decompose = residual
+    ts_decompose.dropna(inplace=True)
+    test_stationarity(ts_decompose)
+

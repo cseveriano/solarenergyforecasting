@@ -16,14 +16,14 @@ from statsmodels.tsa.stattools import acf, pacf
 
 from pyFTS.partitioners import Grid
 from pyFTS.common import FLR,FuzzySet,Membership
-from pyFTS.timeseries import TSAnalysis
+from pyFTS.timeseries import TSAnalysis, Detrending
 
 #from pyFTS import fts
-#from pyFTS import hofts
+from pyFTS import hofts
 #from pyFTS import ifts
 from pyFTS import pfts
 #from pyFTS import tree
-#from pyFTS.benchmarks import benchmarks as bchmk
+from pyFTS.benchmarks import benchmarks as bchmk
 
 os.chdir("C:\\Users\\cseve\\Google Drive\\Doutorado\\Projetos de Pesquisa\\Base de Dados\\INPE-SONDA")
 path = "C:\\Users\\cseve\\Google Drive\\Doutorado\\Projetos de Pesquisa\\Base de Dados\\INPE-SONDA"
@@ -67,57 +67,23 @@ plt.plot(ts30["2013-01-01":"2014-01-01"])
 ## DETRENDING PROCESS
 
 ## moving average
-moving_avg = pd.rolling_mean(ts30["2013-01-01":"2014-01-01"],48)
-plt.plot(moving_avg, color='red')
-
-ts30_moving_avg_diff = ts30 - moving_avg
-ts30_moving_avg_diff.dropna(inplace=True)
+ts30_moving_avg_diff = Detrending.moving_average(ts30["2013-01-01":"2014-01-01"], 48)
 TSAnalysis.test_stationarity(ts30_moving_avg_diff)
 
 ## exponential moving average
-plt.plot(ts30["2013-01-01":"2014-01-01"])
-expwighted_avg = pd.ewma(ts30["2013-01-01":"2014-01-01"],halflife=48)
-plt.plot(expwighted_avg, color='red')
-
-ts30_expwighted_avg_diff = ts30 - expwighted_avg
-ts30_expwighted_avg_diff.dropna(inplace=True)
+ts30_expwighted_avg_diff = Detrending.exponential_moving_average(ts30["2013-01-01":"2014-01-01"], 48)
 TSAnalysis.test_stationarity(ts30_expwighted_avg_diff)
 ##
 
 ## Differencing
-ts30_diff = ts30 - ts30.shift()
-plt.plot(ts30_diff)
-ts30_diff.dropna(inplace=True)
+ts30_diff = Detrending.differencing(ts30)
 test_stationarity(ts30_diff)
-
 ## Test Statistic = -40
 ##
 
 ## Decomposing
-ts30.dropna(inplace=True)
-decomposition = seasonal_decompose(ts30, freq=48)
+TSAnalisys.decomposing(ts30, 48)
 
-trend = decomposition.trend
-seasonal = decomposition.seasonal
-residual = decomposition.resid
-
-plt.subplot(411)
-plt.plot(ts30, label='Original')
-plt.legend(loc='best')
-plt.subplot(412)
-plt.plot(trend, label='Trend')
-plt.legend(loc='best')
-plt.subplot(413)
-plt.plot(seasonal,label='Seasonality')
-plt.legend(loc='best')
-plt.subplot(414)
-plt.plot(residual, label='Residuals')
-plt.legend(loc='best')
-plt.tight_layout()
-
-ts30_decompose = residual
-ts30_decompose.dropna(inplace=True)
-test_stationarity(ts30_decompose)
 ## Test Statistic = -47
 ###
 
@@ -157,7 +123,15 @@ plt.title('RSS: %.4f'% sum((results_AR.fittedvalues-ts30[1:])**2))
 
 ts30_train = ts30["2013-01-01":"2014-01-01"]
 ts30_test = ts30["2014-01-02":"2015-12-01"]
-#enrollments_fs1 = Grid.GridPartitionerTrimf(enrollments,6)
+
+order = 12
+partitions = 100
+sets = Grid.GridPartitionerTrimf(ts30_train,partitions)
+fts = hofts.HighOrderFTS("k = " + str(partitions) + " w = " + str(order))
+fts.train(ts30_train, sets, order)
+forecasted = fts.forecast(ts30_test)
+error = Measures.rmse(np.array(forecasted), np.array(ts30_test[order:]))
+
 
 #pfts1_enrollments = pfts.ProbabilisticFTS("1")
 #pfts1_enrollments.train(enrollments,enrollments_fs1,1)
