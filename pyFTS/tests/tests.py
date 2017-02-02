@@ -131,15 +131,3 @@ fts = hofts.HighOrderFTS("k = " + str(partitions) + " w = " + str(order))
 fts.train(ts30_train, sets, order)
 forecasted = fts.forecast(ts30_test)
 error = Measures.rmse(np.array(forecasted), np.array(ts30_test[order:]))
-
-
-#pfts1_enrollments = pfts.ProbabilisticFTS("1")
-#pfts1_enrollments.train(enrollments,enrollments_fs1,1)
-#pfts1_enrollments.shortname = "1st Order"
-#pfts2_enrollments = pfts.ProbabilisticFTS("2")
-#pfts2_enrollments.dump = False
-#pfts2_enrollments.shortname = "2nd Order"
-#pfts2_enrollments.train(enrollments,enrollments_fs1,2)
-
-
-#pfts1_enrollments.forecastAheadDistribution2(enrollments[:15],5,100)
